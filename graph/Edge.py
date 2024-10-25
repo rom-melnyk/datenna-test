@@ -1,3 +1,4 @@
+import json
 from .utils.utils import autoinc
 from .Node import Node
 
@@ -5,11 +6,12 @@ new_id = autoinc()
 
 class Edge:
     def __init__(
-            self,
-            from_node: Node,
-            to_node: Node,
-            id: int = None,
-            props: dict = None):
+        self,
+        from_node: Node,
+        to_node: Node,
+        id: int = None,
+        props: dict = None
+    ):
         if from_node == to_node or from_node.id == to_node.id:
             raise Exception(f"The loop \"{from_node.id}-{to_node.id}\" is not permitted")
 
@@ -31,3 +33,14 @@ class Edge:
                 return self.from_node
             case _:
                 raise Exception(f"The node \"{node.id}\" does not belong to the edge \"{self.id}\"")
+
+    def serialize(self) -> str:
+        """Return a string representation of the edge."""
+        return json.dumps({
+            "type": "Edge",
+            "id": self.id,
+            "from_node_id": self.from_node.id,
+            "to_node_id": self.to_node.id,
+            "props": self.props,
+        })
+    

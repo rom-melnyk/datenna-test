@@ -1,12 +1,13 @@
 import json
 from .Node import Node
 from .Edge import Edge
+from .GrPath import GrPath
 
 class Graph:
     def __init__(self):
-        self.nodes = {} # dict[int, Node]
-        self.edges = {} # dict[int, Edge]
-        self.node_edges = {} # dict[int, list[Edge]]
+        self.nodes: dict[int, Node] = {}
+        self.edges: dict[int, Edge] = {}
+        self.node_edges: dict[int, list[Edge]] = {}
     
     def add_node(self, node: Node):
         """Add a node to the graph."""
@@ -39,45 +40,79 @@ class Graph:
                 return True
         return False
 
-    def get_paths_from_node(self):
-        pass
-    
+    def get_paths_from_node(
+        self,
+        node: Node,
+        max_hops,
+        /,
+        visited_nodes: set[Node] = None,
+        current_path: GrPath = None,
+    ) -> list[GrPath]:
+        """Find all possible paths from given node within `max_hops`.
+        
+        The method is recursive.
+        """
+        if visited_nodes == None:
+            visited_nodes: set[Node] = set()
+        if current_path != None and len(current_path.edges) >= max_hops:
+            return []
+
+        paths: list[GrPath] = []
+        for e in self.get_node_edges(node):
+            if e.get_opposite_node(node) in visited_nodes:
+                continue
+            if current_path == None:
+                path = GrPath(e, node)
+            else:
+                path = current_path.clone()
+                path.add_edge(e)
+            visited_nodes.add(path.to_node)
+            paths.append(path)
+
+        all_paths = paths[:]
+        for p in paths:
+            # Add paths from destination nodes
+            all_paths += self.get_paths_from_node(
+                p.to_node,
+                max_hops,
+                visited_nodes=visited_nodes,
+                current_path=p)
+            
+        return all_paths
+
     def serialize(self) -> list[str]:
         """Serialize the graph into list of JSONs.
+
         ⚠️ Mind that the result is the list of JSON strings but not a JSON itself ⚠️
         This is done for the sake of performance: parsing a 10Mb JSON is heavy,
         but parsing 100k short strings is ok.
         """
         serialized = []
         for n in self.nodes.values():
-            serialized.append(json.dumps({
-                "type": "Node",
-                "id": n.id,
-                "props": n.props,
-            }))
+            serialized.append(n.serialize())
         for e in self.edges.values():
-            serialized.append(json.dumps({
-                "type": "Edge",
-                "id": e.id,
-                "from_node_id": e.from_node.id,
-                "to_node_id": e.to_node.id,
-                "props": e.props,
-            }))
+            serialized.append(e.serialize())
         return serialized
     
     def from_serialized(serialized: list[str]) -> "Graph":
-        objects = [json.parse(s) for s in serialized]
-        nodes = [Node(id=n.id, props=n.props) for n in objects if objects["type"] == "Node"]
+        """Restore the graph from serialized representation.
+        
+        See Also
+        --------
+        `serialize()`
+        """
+        objects = [json.loads(s) for s in serialized]
+        nodes = [Node(id=n["id"], props=n["props"]) for n in objects if n["type"] == "Node"]
         nodes_dict = {}
         for n in nodes:
             nodes_dict[n.id] = n
         edges = [
             Edge(
-                id=e.id,
-                from_node=nodes_dict[e.from_node_id],
-                to_node=nodes_dict[e.to_node_id],
-                props=e.props
-            ) for e in objects if objects["type"] == "Edge"]
+                id=e["id"],
+                from_node=nodes_dict[e["from_node_id"]],
+                to_node=nodes_dict[e["to_node_id"]],
+                props=e["props"]
+            ) for e in objects if e["type"] == "Edge"]
         graph = Graph()
         for n in nodes:
             graph.add_node(n)

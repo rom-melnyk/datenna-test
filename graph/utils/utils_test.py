@@ -1,4 +1,4 @@
-import utils
+from . import utils
 
 if __name__ == "__main__":
     ai = utils.autoinc()
