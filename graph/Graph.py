@@ -4,22 +4,23 @@ from .Edge import Edge
 from .GrPath import GrPath
 
 class Graph:
+    """Simple graph data engine."""
     def __init__(self):
         self.nodes: dict[int, Node] = {}
         self.edges: dict[int, Edge] = {}
         self.node_edges: dict[int, list[Edge]] = {}
-    
+
     def add_node(self, node: Node):
         """Add a node to the graph."""
         if node.id in self.nodes:
-            raise Exception(f"The node \"{node.id}\" already exists")
+            raise Exception(f"The node {node.id} already exists")
         self.nodes[node.id] = node
         self.node_edges[node.id] = []
 
     def add_edge(self, edge: Edge):
         """Add an edge to the graph and establish all necessary connections."""
         if edge.id in self.edges:
-            raise Exception(f"The node \"{edge.id}\" already exists")
+            raise Exception(f"The edge {edge.id} already exists")
 
         if edge.from_node.id not in self.nodes:
             self.add_node(edge.from_node)
@@ -27,11 +28,12 @@ class Graph:
             self.add_node(edge.to_node)
 
         self.edges[edge.id] = edge
-        
+
         self.node_edges[edge.from_node.id].append(edge)
         self.node_edges[edge.to_node.id].append(edge)
 
     def get_node_edges(self, node: Node) -> list[Edge]:
+        """Return the list of edges hitting given node."""
         return self.node_edges[node.id]
 
     def has_edge_between(self, n1: Node, n2: Node) -> bool:
@@ -44,40 +46,50 @@ class Graph:
         self,
         node: Node,
         max_hops,
-        /,
-        visited_nodes: set[Node] = None,
-        current_path: GrPath = None,
+        _current_path: GrPath = None,
+        _visited_nodes: set[Node] = None,
     ) -> list[GrPath]:
         """Find all possible paths from given node within `max_hops`.
-        
-        The method is recursive.
+
+        The method is recursive and uses BFS graph traversing.
+        **Known flaws:** if there is >1 paths between A and B,
+        the method returns the 1st shortest path; all the other paths are ignored:
+            ```
+            A -- B
+            |    |
+            C -- D
+            get_paths_from_node(A, max_hops=2) -> [{A-B}, {A-C}, {A-B-D}]
+                                                  but not {A-B-D-C}
+                                                  neither {A-C-D-B}
+            ```
         """
-        if visited_nodes == None:
-            visited_nodes: set[Node] = set()
-        if current_path != None and len(current_path.edges) >= max_hops:
+        if _current_path != None and len(_current_path.edges) >= max_hops:
             return []
+        if _visited_nodes == None:
+            _visited_nodes: set[Node] = set()
 
         paths: list[GrPath] = []
         for e in self.get_node_edges(node):
-            if e.get_opposite_node(node) in visited_nodes:
+            """Add 1st degree paths (from given node)."""
+            if e.get_opposite_node(node) in _visited_nodes:
                 continue
-            if current_path == None:
+            if _current_path == None:
                 path = GrPath(e, node)
             else:
-                path = current_path.clone()
+                path = _current_path.clone()
                 path.add_edge(e)
-            visited_nodes.add(path.to_node)
+            _visited_nodes.add(path.to_node)
             paths.append(path)
 
         all_paths = paths[:]
         for p in paths:
-            # Add paths from destination nodes
+            """Add 2nd degree paths (from each destination nodes of 1st deg. paths)"""
             all_paths += self.get_paths_from_node(
                 p.to_node,
                 max_hops,
-                visited_nodes=visited_nodes,
-                current_path=p)
-            
+                _current_path=p,
+                _visited_nodes=_visited_nodes)
+
         return all_paths
 
     def serialize(self) -> list[str]:
@@ -93,10 +105,10 @@ class Graph:
         for e in self.edges.values():
             serialized.append(e.serialize())
         return serialized
-    
+
     def from_serialized(serialized: list[str]) -> "Graph":
         """Restore the graph from serialized representation.
-        
+
         See Also
         --------
         `serialize()`

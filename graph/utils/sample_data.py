@@ -22,7 +22,7 @@ field_size_x = math.floor(math.sqrt(num_cities))
 field_size_y = math.ceil(num_cities / field_size_x)
 distance_mult = 100 # The distance between neighbors.
 chance_extra_routes = 20 # % of cities getting extra routes.
-num_extra_routes = 20
+num_extra_routes = 5
 
 def calc_distance(x1, y1, x2, y2) -> int:
     """Calculate the distance between two points."""
@@ -101,7 +101,7 @@ def read_from_file() -> Graph | None:
         with open(filepath, "r", encoding="utf-8") as file:
             serialized = file.readlines()
             graph = Graph.from_serialized(serialized)
-            print(f"ℹ️ The graph of {len(graph.nodes)} successfully initialized from the {filepath}")
+            print(f"ℹ️ The graph of {len(graph.nodes)} nodes successfully initialized from the {filepath}")
             return graph
     except FileNotFoundError:
         print(f"⚠️ The {filepath} not found")

@@ -1,10 +1,19 @@
 from random import randrange, choice
 
-def autoinc():
-    n = 0
-    while True:
-        n += 1
-        yield n
+class Autoinc:
+    """Simple autoincrement implementation."""
+    def __init__(self):
+        self.index = 0
+
+    def next(self) -> int:
+        """Return next index."""
+        self.index += 1
+        return self.index
+
+    def use(self, used_index: int):
+        """Mark given index as "used" so futher `next()` don't overlap with it."""
+        if used_index > self.index:
+            self.index = used_index
 
 vowels = "eyuioa"
 consonants = "qwrtpsdfghjklzxcvbnm"

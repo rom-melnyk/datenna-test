@@ -1,12 +1,14 @@
 import json
-from .utils.utils import autoinc
+from .utils.utils import Autoinc
 
-new_id = autoinc()
+auto_id = Autoinc()
 
 class Node:
-    def __init__(self, id: str = None, props: dict = None):
+    def __init__(self, id: int = None, props: dict = None):
         if id == None:
-            id = next(new_id)
+            id = auto_id.next()
+        else:
+            auto_id.use(id)
         if props == None:
             props = {}
 

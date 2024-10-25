@@ -1,8 +1,8 @@
 import json
-from .utils.utils import autoinc
+from .utils.utils import Autoinc
 from .Node import Node
 
-new_id = autoinc()
+auto_id = Autoinc()
 
 class Edge:
     def __init__(
@@ -16,7 +16,9 @@ class Edge:
             raise Exception(f"The loop \"{from_node.id}-{to_node.id}\" is not permitted")
 
         if id == None:
-            id = next(new_id)
+            id = auto_id.next()
+        else:
+            auto_id.use(id)
         if props == None:
             props = {}
 
@@ -43,4 +45,3 @@ class Edge:
             "to_node_id": self.to_node.id,
             "props": self.props,
         })
-    
