@@ -54,7 +54,7 @@ async def get_routes_from_city(city_id: int, max_hops: int | None, response: Res
         return {"error": True, "description": f"The `max_hops` must be between 1 and 3"}
 
     city = db().nodes[city_id]
-    routes = db().get_paths_from_node(city, max_hops=2)
+    routes = db().get_paths_from_node(city, max_hops)
     routes_repr = [r.to_api_repr() for r in routes]
 
     """Imitate the `ORDER BY hops ASC, distance ASC`.
