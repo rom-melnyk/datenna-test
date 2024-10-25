@@ -18,7 +18,7 @@ In 2052 we established link with the first inhabited planet around 20 light year
 It seems that they have a pretty developed transport system between their cities.
 
 The app data is based on the alien transport grid:
-- **Nodes** correspond to the cities (which explains their names 😉).
+- **Nodes** correspond to the cities.
   A node has 2 props: `name: str` and `population: int(>=1k, <=1M)`.
 - **Edges** correspond to the transport connections between the cities.
   An edge has one extra property: `distance: int | float`.
@@ -33,7 +33,7 @@ The in-memory graph representation is used (check the `graph.*` modules).
 This is done for the sake of demostration and know flaws are accepted.
 The real graph DB (e.g., Neo4J) can be used; check the implementation of the `db.py` and the `api.py`.
 
-> [!warn] **⚠️ Important**
+> **⚠️ Important**
 > 1. The data (city names, routes and props) is generated randomly.
 >    Hence, after deleting the `.sample_data.graph`, the app restarts
 >    with brand-new cities and routes.
@@ -43,6 +43,8 @@ The real graph DB (e.g., Neo4J) can be used; check the implementation of the `db
 
 
 ## API
+
+Consider the app is running on the `http://127.0.0.1:8000`.
 
 
 ### `GET /api/1.0/cities`
@@ -57,9 +59,9 @@ The real graph DB (e.g., Neo4J) can be used; check the implementation of the `db
 
 **Examples:**
 ```
-GET http://127.0.0.1:8080/api/1.0/cities?name=ab*c
-GET http://127.0.0.1:8080/api/1.0/cities?ppl_over=250000&ppl_under=500000
-GET http://127.0.0.1:8080/api/1.0/cities?name=ab*&ppl_over=750000
+GET /api/1.0/cities?name=ab*c
+GET /api/1.0/cities?ppl_over=250000&ppl_under=500000
+GET /api/1.0/cities?name=ab*&ppl_over=750000
 ```
 
 **🐞 Known issues:**
@@ -73,9 +75,9 @@ The output would benefit from the pagination
 
 **Examples:**
 ```
-GET http://127.0.0.1:8080/api/1.0/city/555
+GET /api/1.0/city/555
     ⬇️ 200 / { "id": 555, "props": { "name": "...", "population": ... } }
-GET http://127.0.0.1:8080/api/1.0/city/123456789
+GET /api/1.0/city/123456789
     ⬇️ 404 / { "error": true }
 ```
 
@@ -89,33 +91,34 @@ GET http://127.0.0.1:8080/api/1.0/city/123456789
 
 **Examples:**
 ```
-POST http://127.0.0.1:8080/api/1.0/cities?name=ab*c
+POST /api/1.0/cities?name=ab*c
      ⬆️ Content-Type: application/json
      ⬆️ { "name": "New York", "population": 15000000 }
+
      ⬇️ // Same as the city/node output
 ```
 
-**⚠️ Known limitations:** It's not permittd to create the city with existing name.
+**⚠️ Known limitations:** It's not permitted to create the city with existing name.
 
 
 ### `GET /api/1.0/routes-from/{city_id}`
 
 **Returns** the list of the routes from given city.
 Consider this as _recommendations_ for the city:
-- The routes contain the destination cities (think _"recommended cities"_).
+- The routes contain the destination (think _"recommended"_) cities.
 - The routes are ordered by travel convenience:
   first by number or stopovers (direct routes first),
   then by distance (closest first within same stopover group).
 
 **Query params:**
 - `max_hops`: optional; set to `2` if omitted.
-  Defines the max route length (1 => direct routes; 3 => with 2 stopovers).
-  Must be within [1..3] because it makes little sense to travel with 2+ stopovers.
+  Defines the max route length (1 → direct routes; 3 → with two stopovers).
+  Must be within [1..3] because it makes little sense to travel with 3+ stopovers.
 
 **Examples:**
 ```
-GET http://127.0.0.1:8080/api/1.0/routes-from/555
-GET http://127.0.0.1:8080/api/1.0/routes-from/555?max_hops=1
+GET /api/1.0/routes-from/555
+GET /api/1.0/routes-from/555?max_hops=1
 ```
 
 **Errors** (400 / `{ "error": true }`) are returned in case of unknown city id
@@ -131,9 +134,10 @@ or if `max_hops` is out of fange.
 
 **Examples:**
 ```
-POST http://127.0.0.1:8080/api/1.0/route
+POST /api/1.0/route
      ⬆️ Content-Type: application/json
      ⬆️ { "from_id": 1, "to_id": 555, "distance": 15000 }
+
      ⬇️ // Edge object
 ```
 
